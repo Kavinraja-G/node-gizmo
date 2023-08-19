@@ -19,3 +19,7 @@
 
 # Go workspace file
 go.work
+
+# Ignore build binary
+nodegizmo
+/.idea/
