@@ -1,0 +1,30 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v**'
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Sets up Go environment with specific version
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.20
+
+      # Runs goreleaser
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
