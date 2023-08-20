@@ -16,20 +16,16 @@ func printLine(w *tabwriter.Writer, lineItems []string) {
 func OutputGenericNodeInfo(genericNodeInfos []pkg.GenericNodeInfo) {
 	w := tabwriter.NewWriter(os.Stdout, 10, 0, 2, ' ', 0)
 
-	printLine(w, []string{"NAME", "VERSION", "OS", "ARCHITECTURE", "STATUS"})
+	printLine(w, []string{"NAME", "VERSION", "Image", "OS", "ARCHITECTURE", "STATUS"})
 
 	for _, nodeInfo := range genericNodeInfos {
 		var lineItems []string
 		lineItems = append(lineItems, nodeInfo.NodeName)
 		lineItems = append(lineItems, nodeInfo.K8sVersion)
+		lineItems = append(lineItems, nodeInfo.Image)
 		lineItems = append(lineItems, nodeInfo.Os)
 		lineItems = append(lineItems, nodeInfo.OsArch)
-
-		if nodeInfo.NodeStatus {
-			lineItems = append(lineItems, "Ready")
-		} else {
-			lineItems = append(lineItems, "NotReady")
-		}
+		lineItems = append(lineItems, nodeInfo.NodeStatus)
 
 		printLine(w, lineItems)
 	}
