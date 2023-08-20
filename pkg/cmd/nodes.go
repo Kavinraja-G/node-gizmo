@@ -3,9 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
+	"log"
+	"strings"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
@@ -26,9 +26,7 @@ func NewCmdNodeInfo() *cobra.Command {
 		},
 	}
 
-	// flags
 	cmd.Flags().BoolVarP(&showTaints, "show-taints", "t", false, "Shows taints on Nodes in the output")
-
 	return cmd
 }
 
@@ -61,9 +59,35 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 		nodeInfos = append(nodeInfos, genericNodeInfo)
 	}
 
-	outputs.OutputGenericNodeInfo(nodeInfos, outputOpts)
+	outputHeaders, outputData := generateOutputData(nodeInfos, outputOpts)
+	outputs.TableOutput(outputHeaders, outputData)
 
 	return nil
+}
+
+func generateOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pkg.OutputOptsForGenericNodeInfo) ([]string, [][]string) {
+	var headers = []string{"NAME", "VERSION", "IMAGE", "OS", "ARCHITECTURE", "STATUS"}
+	var outputData [][]string
+
+	if outputOpts.ShowTaints {
+		headers = append(headers, "TAINTS")
+	}
+
+	for _, nodeInfo := range genericNodeInfos {
+		lineItems := []string{
+			nodeInfo.NodeName,
+			nodeInfo.K8sVersion,
+			nodeInfo.Image,
+			nodeInfo.Os,
+			nodeInfo.OsArch,
+			nodeInfo.NodeStatus,
+		}
+		if outputOpts.ShowTaints {
+			lineItems = append(lineItems, strings.Join(nodeInfo.Taints, "\n"))
+		}
+		outputData = append(outputData, lineItems)
+	}
+	return headers, outputData
 }
 
 func getNodeTaints(rawTaints []corev1.Taint) []string {

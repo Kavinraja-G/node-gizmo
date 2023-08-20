@@ -1,14 +1,12 @@
 package outputs
 
 import (
-	"os"
-	"strings"
-
-	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/olekukonko/tablewriter"
+	"os"
 )
 
-func OutputGenericNodeInfo(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pkg.OutputOptsForGenericNodeInfo) {
+// TableOutput renders a table in terminal
+func TableOutput(headers []string, outputData [][]string) {
 	table := tablewriter.NewWriter(os.Stdout)
 	table.SetRowLine(false)
 	table.SetBorder(false)
@@ -17,27 +15,8 @@ func OutputGenericNodeInfo(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pk
 	table.SetColumnSeparator("")
 	table.SetHeaderLine(false)
 
-	// default headers
-	headers := []string{"NAME", "VERSION", "IMAGE", "OS", "ARCHITECTURE", "STATUS"}
-	if outputOpts.ShowTaints {
-		headers = append(headers, "TAINTS")
-	}
 	table.SetHeader(headers)
-
-	for _, nodeInfo := range genericNodeInfos {
-		lineItems := []string{
-			nodeInfo.NodeName,
-			nodeInfo.K8sVersion,
-			nodeInfo.Image,
-			nodeInfo.Os,
-			nodeInfo.OsArch,
-			nodeInfo.NodeStatus,
-		}
-		if outputOpts.ShowTaints {
-			lineItems = append(lineItems, strings.Join(nodeInfo.Taints, "\n"))
-		}
-		table.Append(lineItems)
-	}
+	table.AppendBulk(outputData)
 
 	table.Render()
 }
