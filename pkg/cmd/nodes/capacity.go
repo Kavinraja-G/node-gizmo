@@ -2,9 +2,10 @@ package nodes
 
 import (
 	"context"
+	"log"
+
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 	"github.com/Kavinraja-G/node-gizmo/pkg/utils"
-	"log"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/Kavinraja-G/node-gizmo/pkg/auth"

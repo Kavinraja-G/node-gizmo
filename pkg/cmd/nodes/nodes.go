@@ -15,7 +15,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var showTaints bool
+var (
+	showTaints           bool
+	showNodeProviderInfo bool
+	showNodeTopologyInfo bool
+)
+
+const (
+	topologyRegionLabel = "topology.kubernetes.io/region"
+	topologyZoneLabel   = "topology.kubernetes.io/zone"
+)
 
 func NewCmdNodeInfo() *cobra.Command {
 	cmd := &cobra.Command{
@@ -28,7 +37,9 @@ func NewCmdNodeInfo() *cobra.Command {
 	}
 
 	// additional local flags
-	cmd.Flags().BoolVarP(&showTaints, "show-taints", "t", false, "Shows taints on Nodes in the output")
+	cmd.Flags().BoolVarP(&showTaints, "show-taints", "t", false, "Shows taints added on a node")
+	cmd.Flags().BoolVarP(&showNodeProviderInfo, "show-providers", "p", false, "Shows cloud provider name for a node")
+	cmd.Flags().BoolVarP(&showNodeTopologyInfo, "show-topology", "T", false, "Shows node topology info like region & zones for a node")
 
 	// additional sub-commands
 	cmd.AddCommand(NewCmdNodeCapacityInfo())
@@ -39,7 +50,9 @@ func NewCmdNodeInfo() *cobra.Command {
 func showNodeInfo(cmd *cobra.Command, args []string) error {
 	var nodeInfos []pkg.GenericNodeInfo
 	var outputOpts = pkg.OutputOptsForGenericNodeInfo{
-		ShowTaints: showTaints,
+		ShowTaints:           showTaints,
+		ShowNodeProviderInfo: showNodeProviderInfo,
+		ShowNodeTopologyInfo: showNodeTopologyInfo,
 	}
 
 	clientset, err := auth.K8sAuth()
@@ -62,6 +75,12 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 		if ok, _ := cmd.Flags().GetBool("show-taints"); ok {
 			genericNodeInfo.Taints = getNodeTaints(node.Spec.Taints)
 		}
+		if ok, _ := cmd.Flags().GetBool("show-providers"); ok {
+			genericNodeInfo.NodeProvider = getNodeProviderName(node.Spec.ProviderID)
+		}
+		if ok, _ := cmd.Flags().GetBool("show-topology"); ok {
+			genericNodeInfo.NodeTopologyRegion, genericNodeInfo.NodeTopologyZone = getNodeTopologyInfo(node.Labels)
+		}
 
 		nodeInfos = append(nodeInfos, genericNodeInfo)
 	}
@@ -79,6 +98,12 @@ func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOp
 	if outputOpts.ShowTaints {
 		headers = append(headers, "TAINTS")
 	}
+	if outputOpts.ShowNodeProviderInfo {
+		headers = append(headers, "PROVIDER")
+	}
+	if outputOpts.ShowNodeTopologyInfo {
+		headers = append(headers, "REGION", "ZONE")
+	}
 
 	for _, nodeInfo := range genericNodeInfos {
 		lineItems := []string{
@@ -92,9 +117,36 @@ func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOp
 		if outputOpts.ShowTaints {
 			lineItems = append(lineItems, strings.Join(nodeInfo.Taints, "\n"))
 		}
+		if outputOpts.ShowNodeProviderInfo {
+			lineItems = append(lineItems, nodeInfo.NodeProvider)
+		}
+		if outputOpts.ShowNodeTopologyInfo {
+			lineItems = append(lineItems, nodeInfo.NodeTopologyRegion, nodeInfo.NodeTopologyZone)
+		}
 		outputData = append(outputData, lineItems)
 	}
 	return headers, outputData
+}
+
+func getNodeTopologyInfo(labels map[string]string) (string, string) {
+	var region string
+	var zone string
+
+	if val, ok := labels[topologyRegionLabel]; ok {
+		region = val
+	}
+	if val, ok := labels[topologyZoneLabel]; ok {
+		zone = val
+	}
+	return region, zone
+}
+
+func getNodeProviderName(providerID string) string {
+	// stripping providerName from the providerID in the spec <ProviderName>://<ProviderSpecificNodeID>
+	if providerID != "" {
+		return strings.Split(providerID, ":")[0]
+	}
+	return "others"
 }
 
 func getNodeTaints(rawTaints []corev1.Taint) []string {
