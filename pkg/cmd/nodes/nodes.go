@@ -1,11 +1,12 @@
-package cmd
+package nodes
 
 import (
 	"context"
 	"fmt"
-	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 	"log"
 	"strings"
+
+	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
@@ -26,7 +27,12 @@ func NewCmdNodeInfo() *cobra.Command {
 		},
 	}
 
+	// additional local flags
 	cmd.Flags().BoolVarP(&showTaints, "show-taints", "t", false, "Shows taints on Nodes in the output")
+
+	// additional sub-commands
+	cmd.AddCommand(NewCmdNodeCapacityInfo())
+
 	return cmd
 }
 
@@ -39,6 +45,7 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 	clientset, err := auth.K8sAuth()
 	if err != nil {
 		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+		return err
 	}
 
 	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
@@ -59,13 +66,13 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 		nodeInfos = append(nodeInfos, genericNodeInfo)
 	}
 
-	outputHeaders, outputData := generateOutputData(nodeInfos, outputOpts)
+	outputHeaders, outputData := generateNodeInfoOutputData(nodeInfos, outputOpts)
 	outputs.TableOutput(outputHeaders, outputData)
 
 	return nil
 }
 
-func generateOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pkg.OutputOptsForGenericNodeInfo) ([]string, [][]string) {
+func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pkg.OutputOptsForGenericNodeInfo) ([]string, [][]string) {
 	var headers = []string{"NAME", "VERSION", "IMAGE", "OS", "ARCHITECTURE", "STATUS"}
 	var outputData [][]string
 
