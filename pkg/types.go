@@ -28,12 +28,11 @@ type NodeCapacities struct {
 	PodCapacity      string // count
 }
 
-type DetailedNodeInfo struct {
-	NodeName           string
-	NodeAddresses      []string
-	NodeHostname       string
-	NodeTopologyRegion string
-	NodeTopologyZone   string
-	NodeCloudProvider  string
-	NodeGroup          string
+type GenericNodepoolInfo struct {
+	NodepoolID   string
+	Nodes        []string
+	Provider     string
+	InstanceType string
+	Region       string
+	Zone         string
 }

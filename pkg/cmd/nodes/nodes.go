@@ -21,11 +21,6 @@ var (
 	showNodeTopologyInfo bool
 )
 
-const (
-	topologyRegionLabel = "topology.kubernetes.io/region"
-	topologyZoneLabel   = "topology.kubernetes.io/zone"
-)
-
 func NewCmdNodeInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "node",
@@ -79,7 +74,7 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 			genericNodeInfo.NodeProvider = getNodeProviderName(node.Spec.ProviderID)
 		}
 		if ok, _ := cmd.Flags().GetBool("show-topology"); ok {
-			genericNodeInfo.NodeTopologyRegion, genericNodeInfo.NodeTopologyZone = getNodeTopologyInfo(node.Labels)
+			genericNodeInfo.NodeTopologyRegion, genericNodeInfo.NodeTopologyZone = pkg.GetNodeTopologyInfo(node.Labels)
 		}
 
 		nodeInfos = append(nodeInfos, genericNodeInfo)
@@ -126,19 +121,6 @@ func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOp
 		outputData = append(outputData, lineItems)
 	}
 	return headers, outputData
-}
-
-func getNodeTopologyInfo(labels map[string]string) (string, string) {
-	var region string
-	var zone string
-
-	if val, ok := labels[topologyRegionLabel]; ok {
-		region = val
-	}
-	if val, ok := labels[topologyZoneLabel]; ok {
-		zone = val
-	}
-	return region, zone
 }
 
 func getNodeProviderName(providerID string) string {

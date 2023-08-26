@@ -1,0 +1,124 @@
+package nodepool
+
+import (
+	"context"
+	"log"
+	"strings"
+
+	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
+
+	"github.com/Kavinraja-G/node-gizmo/pkg"
+	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
+	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func NewCmdNodepoolInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "nodepool",
+		Short:   "Detailed info about Nodepool",
+		Aliases: []string{"np"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return showNodePoolInfo(cmd, args)
+		},
+	}
+
+	return cmd
+}
+
+func showNodePoolInfo(cmd *cobra.Command, args []string) error {
+	var genericNodepoolInfos = make(map[string]pkg.GenericNodepoolInfo)
+
+	clientset, err := auth.K8sAuth()
+	if err != nil {
+		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+		return err
+	}
+
+	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	for _, node := range nodes.Items {
+		var genericNodepoolInfo pkg.GenericNodepoolInfo
+
+		cloudProvider, nodepoolID := getNodepoolIDAndProvider(node.Labels)
+		if _, ok := genericNodepoolInfos[nodepoolID]; !ok {
+			genericNodepoolInfo.NodepoolID = nodepoolID
+			genericNodepoolInfo.Nodes = append(genericNodepoolInfo.Nodes, node.Name)
+			genericNodepoolInfo.Provider = cloudProvider
+			genericNodepoolInfo.InstanceType = getNodeInstanceType(node.Labels)
+			genericNodepoolInfo.Region, genericNodepoolInfo.Zone = pkg.GetNodeTopologyInfo(node.Labels)
+
+			// finally add the genericNodepoolInfo data to the genericNodepoolInfos
+			genericNodepoolInfos[nodepoolID] = genericNodepoolInfo
+		} else {
+			var currentNodepoolInfo = genericNodepoolInfos[nodepoolID]
+			currentNodepoolInfo.Nodes = append(currentNodepoolInfo.Nodes, node.Name)
+			genericNodepoolInfos[nodepoolID] = currentNodepoolInfo
+		}
+	}
+
+	outputHeaders, outputData := generateNodepoolInfoData(genericNodepoolInfos)
+	outputs.TableOutput(outputHeaders, outputData)
+
+	return nil
+}
+
+func getNodeAddresses(addresses []corev1.NodeAddress, addressType string) string {
+	for _, address := range addresses {
+		if (address.Type == corev1.NodeHostName) && (addressType == string(corev1.NodeHostName)) {
+			return address.Address
+		}
+		if (address.Type == corev1.NodeInternalIP) && (addressType == string(corev1.NodeInternalIP)) {
+			return address.Address
+		}
+		if (address.Type == corev1.NodeExternalIP) && (addressType == string(corev1.NodeExternalIP)) {
+			return address.Address
+		}
+		if (address.Type == corev1.NodeExternalDNS) && (addressType == string(corev1.NodeExternalDNS)) {
+			return address.Address
+		}
+	}
+	return "Unknown"
+}
+
+func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
+	if id, ok := labels[pkg.AwsNodepoolLabel]; ok {
+		return "EKS", id
+	}
+	if id, ok := labels[pkg.GkeNodepoolLabel]; ok {
+		return "GKE", id
+	}
+	if id, ok := labels[pkg.AksNodepoolLabel]; ok {
+		return "AKS", id
+	}
+
+	return "Unknown", "Unknown"
+}
+
+func getNodeInstanceType(labels map[string]string) string {
+	if val, ok := labels[pkg.NodeInstanceTypeLabel]; ok {
+		return val
+	}
+
+	return "Unknown"
+}
+
+func generateNodepoolInfoData(genericNodepoolInfos map[string]pkg.GenericNodepoolInfo) ([]string, [][]string) {
+	var headers = []string{"NODEPOOL", "PROVIDER", "REGION", "ZONE", "INSTANCE-TYPE", "NODES"}
+	var outputData [][]string
+
+	for _, nodepoolInfo := range genericNodepoolInfos {
+		lineItems := []string{
+			nodepoolInfo.NodepoolID,
+			nodepoolInfo.Provider,
+			nodepoolInfo.Region,
+			nodepoolInfo.Zone,
+			nodepoolInfo.InstanceType,
+			strings.Join(nodepoolInfo.Nodes, "\n"),
+		}
+
+		outputData = append(outputData, lineItems)
+	}
+
+	return headers, outputData
+}

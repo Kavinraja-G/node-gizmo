@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/Kavinraja-G/node-gizmo/pkg/cmd/nodepool"
 	"github.com/Kavinraja-G/node-gizmo/pkg/cmd/nodes"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericiooptions"
@@ -21,6 +22,7 @@ func NewCmdRoot(streams genericiooptions.IOStreams) *cobra.Command {
 
 	// child commands
 	cmd.AddCommand(nodes.NewCmdNodeInfo())
+	cmd.AddCommand(nodepool.NewCmdNodepoolInfo())
 
 	return cmd
 }
