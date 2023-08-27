@@ -17,8 +17,8 @@ import (
 func NewCmdNodepoolInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "nodepool",
-		Short:   "Detailed info about Nodepool",
-		Aliases: []string{"np"},
+		Short:   "Displays detailed information about Nodepool/Nodegroup",
+		Aliases: []string{"np", "ng"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodePoolInfo(cmd, args)
 		},
@@ -27,6 +27,7 @@ func NewCmdNodepoolInfo() *cobra.Command {
 	return cmd
 }
 
+// showNodePoolInfo driver function for the 'nodepool' command
 func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 	var genericNodepoolInfos = make(map[string]pkg.GenericNodepoolInfo)
 
@@ -63,6 +64,8 @@ func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// getNodeAddresses returns the respective nodeAddress values for 'Hostname', 'InternalIP', 'ExternalIP', 'ExternalDNS'
+// TODO: Add nodeAddress fields for detailed node info using flags
 func getNodeAddresses(addresses []corev1.NodeAddress, addressType string) string {
 	for _, address := range addresses {
 		if (address.Type == corev1.NodeHostName) && (addressType == string(corev1.NodeHostName)) {
@@ -81,6 +84,7 @@ func getNodeAddresses(addresses []corev1.NodeAddress, addressType string) string
 	return "Unknown"
 }
 
+// getNodepoolIDAndProvider returns the cloud provider type for the nodepool (EKS, GKE, AKS, can be Unknown)
 func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
 	if id, ok := labels[pkg.AwsNodepoolLabel]; ok {
 		return "EKS", id
@@ -95,6 +99,7 @@ func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
 	return "Unknown", "Unknown"
 }
 
+// getNodeInstanceType returns the node instanceType based on the instance-type label
 func getNodeInstanceType(labels map[string]string) string {
 	if val, ok := labels[pkg.NodeInstanceTypeLabel]; ok {
 		return val
@@ -103,6 +108,7 @@ func getNodeInstanceType(labels map[string]string) string {
 	return "Unknown"
 }
 
+// generateNodepoolInfoData generates the Nodepool info outputs and the required headers for table-writer
 func generateNodepoolInfoData(genericNodepoolInfos map[string]pkg.GenericNodepoolInfo) ([]string, [][]string) {
 	var headers = []string{"NODEPOOL", "PROVIDER", "REGION", "ZONE", "INSTANCE-TYPE", "NODES"}
 	var outputData [][]string

@@ -1,19 +1,20 @@
 package auth
 
 import (
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/util/homedir"
 	"log"
 	"path/filepath"
-)
 
-import (
 	"github.com/Kavinraja-G/kube-bouncer/pkg/utils"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/homedir"
+
 	k8s "k8s.io/client-go/kubernetes"
+
 	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// GetKubeConfig is used to fetch the kubeConfig based on the KUBECONFIG env or '~/.kube/config' location
 func GetKubeConfig() (*rest.Config, error) {
 	var kubeConfigPath string
 	if home := homedir.HomeDir(); home != "" {
@@ -26,6 +27,7 @@ func GetKubeConfig() (*rest.Config, error) {
 	return k8sConfig, err
 }
 
+// K8sAuth is used to get the Kubernetes clientset from the config
 func K8sAuth() (*k8s.Clientset, error) {
 	k8sConfig, err := GetKubeConfig()
 	clientset, err := k8s.NewForConfig(k8sConfig)

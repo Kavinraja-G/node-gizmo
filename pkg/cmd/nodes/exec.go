@@ -23,15 +23,16 @@ var (
 	podTerminationGracePeriodSeconds = int64(0)
 )
 
+// NewCmdNodeExec initialises the 'exec' command
 func NewCmdNodeExec() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "exec",
-		Short:   "Spawns a nsenter pod to exec into the respective node",
+		Use:     "exec nodeName",
+		Short:   "Spawns a 'nsenter' pod to exec into the provided node",
 		Aliases: []string{"ex"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
-				return errors.New("please provide a nodeName to exec into")
+				return errors.New("please provide a nodeName to exec")
 			}
 			if !isValidNode(args[0]) {
 				return errors.New(fmt.Sprintf("%v is not a valid node", args[0]))
@@ -45,7 +46,9 @@ func NewCmdNodeExec() *cobra.Command {
 	return cmd
 }
 
+// isValidNode validates the given node is available in the cluster or not
 func isValidNode(nodeName string) bool {
+	//TODO: Remove repeated clientset initialisation
 	clientset, err := auth.K8sAuth()
 	if err != nil {
 		log.Fatalf("Error while authenticating to kubernetes: %v", err)
@@ -65,6 +68,7 @@ func isValidNode(nodeName string) bool {
 	return false
 }
 
+// createExecPodInTargetedNode creates the nsenter pod in the given node
 func createExecPodInTargetedNode(nodeName string) error {
 	var nodeshellPodName = fmt.Sprintf("nodeshell-%v", nodeName)
 
@@ -107,8 +111,10 @@ func createExecPodInTargetedNode(nodeName string) error {
 		},
 	}
 
+	//TODO: Remove repeated clientset initialisation
 	clientset, err := auth.K8sAuth()
 	if err != nil {
+		log.Fatalf("Error while authenticating to kubernetes: %v", err)
 		return err
 	}
 
@@ -116,6 +122,7 @@ func createExecPodInTargetedNode(nodeName string) error {
 	return err
 }
 
+// execIntoNode is the driver function used to exec into the nsenter pod deployed in the targeted node
 func execIntoNode(cmd *cobra.Command, nodeName string) error {
 	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
 	err := createExecPodInTargetedNode(nodeName)
@@ -123,8 +130,10 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 		return err
 	}
 
+	//TODO: Remove repeated clientset initialisation
 	clientset, err := auth.K8sAuth()
 	if err != nil {
+		log.Fatalf("Error while authenticating to kubernetes: %v", err)
 		return err
 	}
 
@@ -139,12 +148,15 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 	}
 
 	req.VersionedParams(opts, scheme.ParameterCodec)
+
+	//TODO: Check if there is any way we can fetch the config from the clientset itself
 	k8sConfig, err := auth.GetKubeConfig()
 	if err != nil {
 		log.Fatalf("Error while getting Kubeconfig: %v", err)
 		return err
 	}
 
+	// initiate the exec command on the nsenter pod and creates a bidirectional connection to the server
 	exec, err := remotecommand.NewSPDYExecutor(k8sConfig, "POST", req.URL())
 	if err != nil {
 		log.Fatalf("Error while running exec on nodeshell pod: %v", err)
@@ -160,17 +172,21 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 	return err
 }
 
+// cleanUpNodeshellPods cleans up the nsenter pod once the shell is exited
 func cleanUpNodeshellPods(cmd *cobra.Command, nodeName string) error {
 	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
 
+	//TODO: Remove repeated clientset initialisation
 	clientset, err := auth.K8sAuth()
 	if err != nil {
 		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+		return err
 	}
 
 	err = clientset.CoreV1().Pods(nodeshellPodNamespace).Delete(context.TODO(), nodeshellPodName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Fatalf("Error while creating the nodeshell pod: %v", err)
+		return err
 	}
 
 	return err

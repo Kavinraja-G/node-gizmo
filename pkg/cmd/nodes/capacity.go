@@ -13,10 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// NewCmdNodeCapacityInfo initializes the 'capacity' command
 func NewCmdNodeCapacityInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capacity",
-		Short:   "Node capacity info",
+		Short:   "Displays Node capacity related information",
 		Aliases: []string{"capacities", "cp"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodeCapacities(cmd, args)
@@ -26,6 +27,7 @@ func NewCmdNodeCapacityInfo() *cobra.Command {
 	return cmd
 }
 
+// showNodeCapacities driver function for 'node capacity' command
 func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	var nodeCapacityInfo []pkg.NodeCapacities
 
@@ -59,6 +61,7 @@ func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// generateNodeCapacityOutputData generates the NodeCapacity outputs and the required headers for table-writer
 func generateNodeCapacityOutputData(nodeCapacityInfo []pkg.NodeCapacities) ([]string, [][]string) {
 	var headers = []string{"NAME", "CPU", "MEMORY", "DISK", "EPHEMERAL", "POD CAPACITY"}
 	var outputData [][]string

@@ -21,10 +21,11 @@ var (
 	showNodeTopologyInfo bool
 )
 
+// NewCmdNodeInfo initializes the 'node' command
 func NewCmdNodeInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "node",
-		Short:   "Generic node information",
+		Short:   "Displays generic node related information in the cluster",
 		Aliases: []string{"nodes"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodeInfo(cmd, args)
@@ -43,6 +44,7 @@ func NewCmdNodeInfo() *cobra.Command {
 	return cmd
 }
 
+// showNodeInfo driver function for generic node info command
 func showNodeInfo(cmd *cobra.Command, args []string) error {
 	var nodeInfos []pkg.GenericNodeInfo
 	var outputOpts = pkg.OutputOptsForGenericNodeInfo{
@@ -87,6 +89,37 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// getNodeProviderName returns the providerName stripped from the providerID in the spec
+// providerID = aws://someRandomNodeID => "aws"
+// providerID = nil || "" => "others"
+func getNodeProviderName(providerID string) string {
+	// providerID format <ProviderName>://<ProviderSpecificNodeID>
+	if providerID != "" {
+		return strings.Split(providerID, ":")[0]
+	}
+	return "others"
+}
+
+// getNodeTaints returns the taints that are added to the node
+func getNodeTaints(rawTaints []corev1.Taint) []string {
+	var taints []string
+	for _, taint := range rawTaints {
+		taints = append(taints, fmt.Sprintf("%v=%v:%v", taint.Key, taint.Value, taint.Effect))
+	}
+	return taints
+}
+
+// getNodeStatus returns if the provided node is 'Ready' or 'NotReady'
+func getNodeStatus(nodeConditions []corev1.NodeCondition) string {
+	for _, nodeCondition := range nodeConditions {
+		if nodeCondition.Type == corev1.NodeReady {
+			return "Ready"
+		}
+	}
+	return "NotReady"
+}
+
+// generateNodeInfoOutputData generates the NodeInfo outputs and the required headers for table-writer
 func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOpts pkg.OutputOptsForGenericNodeInfo) ([]string, [][]string) {
 	var headers = []string{"NAME", "VERSION", "IMAGE", "OS", "ARCHITECTURE", "STATUS"}
 	var outputData [][]string
@@ -122,29 +155,4 @@ func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOp
 		outputData = append(outputData, lineItems)
 	}
 	return headers, outputData
-}
-
-func getNodeProviderName(providerID string) string {
-	// stripping providerName from the providerID in the spec <ProviderName>://<ProviderSpecificNodeID>
-	if providerID != "" {
-		return strings.Split(providerID, ":")[0]
-	}
-	return "others"
-}
-
-func getNodeTaints(rawTaints []corev1.Taint) []string {
-	var taints []string
-	for _, taint := range rawTaints {
-		taints = append(taints, fmt.Sprintf("%v=%v:%v", taint.Key, taint.Value, taint.Effect))
-	}
-	return taints
-}
-
-func getNodeStatus(nodeConditions []corev1.NodeCondition) string {
-	for _, nodeCondition := range nodeConditions {
-		if nodeCondition.Type == corev1.NodeReady {
-			return "Ready"
-		}
-	}
-	return "NotReady"
 }

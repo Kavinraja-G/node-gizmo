@@ -9,6 +9,8 @@ import (
 	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
 
+// Execute drives the root 'nodegizmo' command
+// TODO: Revist the kubectl-plugin creation logic for nodegizmo
 func Execute() error {
 	flags := pflag.NewFlagSet("kubectl-ng", pflag.ExitOnError)
 	pflag.CommandLine = flags
