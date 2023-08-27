@@ -5,11 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
+
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	nodeshellPodNamespace            = "default"
+	nodeshellPodNamePrefix           = "nodeshell-"
+	podSCPrivileged                  = true
+	podTerminationGracePeriodSeconds = int64(0)
 )
 
 func NewCmdNodeExec() *cobra.Command {
@@ -26,6 +37,9 @@ func NewCmdNodeExec() *cobra.Command {
 				return errors.New(fmt.Sprintf("%v is not a valid node", args[0]))
 			}
 			return execIntoNode(cmd, args[0])
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return cleanUpNodeshellPods(cmd, args[0])
 		},
 	}
 	return cmd
@@ -51,11 +65,8 @@ func isValidNode(nodeName string) bool {
 	return false
 }
 
-func execIntoNode(cmd *cobra.Command, nodeName string) error {
+func createExecPodInTargetedNode(nodeName string) error {
 	var nodeshellPodName = fmt.Sprintf("nodeshell-%v", nodeName)
-	var nodeshellPodNamespace = "default"
-	var podSCPrivileged = true
-	var podTerminationGracePeriodSeconds = int64(0)
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -63,7 +74,6 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 			Namespace: nodeshellPodNamespace,
 			Labels: map[string]string{
 				"app.kubernetes.io/name":       nodeshellPodName,
-				"app.kubernetes.io/version":    cmd.Version,
 				"app.kubernetes.io/component":  "exec",
 				"app.kubernetes.io/managed-by": "node-gizmo",
 			},
@@ -99,13 +109,69 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 
 	clientset, err := auth.K8sAuth()
 	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+		return err
 	}
 
 	_, err = clientset.CoreV1().Pods(nodeshellPodNamespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+	return err
+}
+
+func execIntoNode(cmd *cobra.Command, nodeName string) error {
+	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
+	err := createExecPodInTargetedNode(nodeName)
+	if err != nil {
+		return err
+	}
+
+	clientset, err := auth.K8sAuth()
+	if err != nil {
+		return err
+	}
+
+	var podExecCmd = []string{"sh", "-c", "(bash || ash || sh)"}
+	req := clientset.CoreV1().RESTClient().Post().Resource("pods").Name(nodeshellPodName).Namespace(nodeshellPodNamespace).SubResource("exec")
+	opts := &corev1.PodExecOptions{
+		Command: podExecCmd,
+		Stdin:   true,
+		Stdout:  true,
+		Stderr:  true,
+		TTY:     true,
+	}
+
+	req.VersionedParams(opts, scheme.ParameterCodec)
+	k8sConfig, err := auth.GetKubeConfig()
+	if err != nil {
+		log.Fatalf("Error while getting Kubeconfig: %v", err)
+		return err
+	}
+
+	exec, err := remotecommand.NewSPDYExecutor(k8sConfig, "POST", req.URL())
+	if err != nil {
+		log.Fatalf("Error while running exec on nodeshell pod: %v", err)
+		return err
+	}
+
+	err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
+		Stdin:  os.Stdin,
+		Stdout: os.Stdout,
+		Stderr: os.Stderr,
+	})
+
+	return err
+}
+
+func cleanUpNodeshellPods(cmd *cobra.Command, nodeName string) error {
+	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
+
+	clientset, err := auth.K8sAuth()
+	if err != nil {
+		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+	}
+
+	err = clientset.CoreV1().Pods(nodeshellPodNamespace).Delete(context.TODO(), nodeshellPodName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Fatalf("Error while creating the nodeshell pod: %v", err)
 	}
 
-	return nil
+	return err
 }

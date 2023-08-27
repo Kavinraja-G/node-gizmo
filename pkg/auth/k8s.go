@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/homedir"
 	"log"
 	"path/filepath"
@@ -13,7 +14,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func K8sAuth() (*k8s.Clientset, error) {
+func GetKubeConfig() (*rest.Config, error) {
 	var kubeConfigPath string
 	if home := homedir.HomeDir(); home != "" {
 		kubeConfigPath = filepath.Join(home, ".kube", "config")
@@ -21,9 +22,13 @@ func K8sAuth() (*k8s.Clientset, error) {
 		kubeConfigPath = utils.GetEnv("KUBECONFIG", "~/.kube/config")
 	}
 
-	k8cfg, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	k8sConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	return k8sConfig, err
+}
 
-	clientset, err := k8s.NewForConfig(k8cfg)
+func K8sAuth() (*k8s.Clientset, error) {
+	k8sConfig, err := GetKubeConfig()
+	clientset, err := k8s.NewForConfig(k8sConfig)
 	if err != nil {
 		log.Fatalf("Error while creating the clientset: %v", err)
 	}
