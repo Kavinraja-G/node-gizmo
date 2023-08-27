@@ -38,6 +38,7 @@ func NewCmdNodeInfo() *cobra.Command {
 
 	// additional sub-commands
 	cmd.AddCommand(NewCmdNodeCapacityInfo())
+	cmd.AddCommand(NewCmdNodeExec())
 
 	return cmd
 }
