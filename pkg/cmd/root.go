@@ -5,12 +5,11 @@ import (
 	"github.com/Kavinraja-G/node-gizmo/pkg/cmd/nodes"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
-	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"log"
 )
 
 // NewCmdRoot initializes the root command 'nodegizmo'
-func NewCmdRoot(streams genericiooptions.IOStreams) *cobra.Command {
+func NewCmdRoot() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "nodegizmo",
 		Aliases: []string{"ng"},
