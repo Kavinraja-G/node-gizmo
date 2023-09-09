@@ -1,21 +1,12 @@
 package cmd
 
 import (
-	"os"
-
-	"github.com/spf13/pflag"
-
 	"github.com/Kavinraja-G/node-gizmo/pkg/cmd"
-	"k8s.io/cli-runtime/pkg/genericiooptions"
 )
 
 // Execute drives the root 'nodegizmo' command
-// TODO: Revist the kubectl-plugin creation logic for nodegizmo
 func Execute() error {
-	flags := pflag.NewFlagSet("kubectl-ng", pflag.ExitOnError)
-	pflag.CommandLine = flags
-
-	root := cmd.NewCmdRoot(genericiooptions.IOStreams{In: os.Stdin, Out: os.Stdout, ErrOut: os.Stderr})
+	root := cmd.NewCmdRoot()
 	if err := root.Execute(); err != nil {
 		return err
 	}
