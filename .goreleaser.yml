@@ -1,12 +1,26 @@
-project_name: node-gizmo
+project_name: nodegizmo
 
 builds:
-  - binary: nodegizmo
-    env: [CGO_ENABLED=0]
+  - id: nodegizmo
+    binary: nodegizmo
+    env:
+      - CGO_ENABLED=0
     goos:
       - linux
-      - windows
       - darwin
+      - windows
     goarch:
       - amd64
       - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - builds:
+      - nodegizmo
+    name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: false
+    format: tar.gz
+    files:
+      - LICENSE
