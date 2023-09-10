@@ -3,7 +3,6 @@ module github.com/Kavinraja-G/node-gizmo
 go 1.20
 
 require (
-	github.com/Kavinraja-G/kube-bouncer v0.1.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.7.0
 	k8s.io/api v0.28.0

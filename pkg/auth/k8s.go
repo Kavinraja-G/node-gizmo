@@ -4,7 +4,8 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/Kavinraja-G/kube-bouncer/pkg/utils"
+	"github.com/Kavinraja-G/node-gizmo/pkg/utils"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/homedir"
 
