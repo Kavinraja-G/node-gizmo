@@ -24,6 +24,3 @@ A CLI utility for your Kubernetes nodes
   - Instance type
   - Nodepool provider (supported: EKS/AKS/GKE)
 - Exec into any node by spawning a `nsenter` pod automatically based on the node selection
-
-### Docs
-CLI commands usage & docs are available [here](docs/nodegizmo.md).
