@@ -34,6 +34,5 @@ Nodepool related information
 <p align="center"><img src="/assets/nodegizmo-nodepool.png" alt="Nodegizmo node "/></p>
 
 ##### nodegizmo node exec nodeName
-> Note: This feature is still in beta
 
 Exec into any node by spawning a `nsenter` pod automatically based on the node selection.
