@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Kavinraja-G/node-gizmo/utils"
 	"log"
 	"os"
+	"time"
+
+	k8errors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 
-	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,9 +38,17 @@ func NewCmdNodeExec() *cobra.Command {
 			if len(args) < 1 {
 				return errors.New("please provide a nodeName to exec")
 			}
-			if !isValidNode(args[0]) {
+			nodeName := args[0]
+
+			if !isValidNode(nodeName) {
 				return errors.New(fmt.Sprintf("%v is not a valid node", args[0]))
 			}
+
+			err := createExecPodInTargetedNode(nodeName)
+			if err != nil {
+				return err
+			}
+
 			return execIntoNode(cmd, args[0])
 		},
 		PostRunE: func(cmd *cobra.Command, args []string) error {
@@ -48,13 +60,7 @@ func NewCmdNodeExec() *cobra.Command {
 
 // isValidNode validates the given node is available in the cluster or not
 func isValidNode(nodeName string) bool {
-	//TODO: Remove repeated clientset initialisation
-	clientset, err := auth.K8sAuth()
-	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
-	}
-
-	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		log.Fatalf("Error while listing the nodes in the cluster: %v", err)
 	}
@@ -111,34 +117,56 @@ func createExecPodInTargetedNode(nodeName string) error {
 		},
 	}
 
-	//TODO: Remove repeated clientset initialisation
-	clientset, err := auth.K8sAuth()
+	_, err := utils.Cfg.Clientset.CoreV1().Pods(nodeshellPodNamespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
+		// validates if the pod already exists
+		if k8errors.IsAlreadyExists(err) {
+			return nil
+		}
 		return err
 	}
 
-	_, err = clientset.CoreV1().Pods(nodeshellPodNamespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+	// wait for exec pod to get RUNNING
+	checkExecPodRunningStatus := func() (bool, error) {
+		pod, err := utils.Cfg.Clientset.CoreV1().Pods(nodeshellPodNamespace).Get(context.TODO(), nodeshellPodName, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		if pod.Status.Phase == corev1.PodRunning {
+			return true, nil
+		}
+
+		return false, nil
+	}
+
+	backoff := wait.Backoff{
+		Steps:    5,                // Number of retry steps.
+		Duration: 10 * time.Second, // Initial backoff duration.
+		Factor:   1.0,              // Multiplier for each step's duration.
+		Jitter:   0.1,              // Jitter to randomize the duration slightly.
+	}
+
+	// waits exponentially for exec pod to be RUNNING
+	startTime := time.Now()
+	err = wait.ExponentialBackoff(backoff, func() (bool, error) {
+		elapsedWaitTime := time.Since(startTime)
+		log.Printf("Waiting for exec pod %s to be RUNNING. Elapsed time: %v", nodeshellPodName, elapsedWaitTime)
+		return checkExecPodRunningStatus()
+	})
+	if err != nil {
+		log.Fatalf("exec pod did not reached the RUNNING state: %v", err)
+	}
+
 	return err
 }
 
 // execIntoNode is the driver function used to exec into the nsenter pod deployed in the targeted node
 func execIntoNode(cmd *cobra.Command, nodeName string) error {
 	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
-	err := createExecPodInTargetedNode(nodeName)
-	if err != nil {
-		return err
-	}
-
-	//TODO: Remove repeated clientset initialisation
-	clientset, err := auth.K8sAuth()
-	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
-		return err
-	}
 
 	var podExecCmd = []string{"sh", "-c", "(bash || ash || sh)"}
-	req := clientset.CoreV1().RESTClient().Post().Resource("pods").Name(nodeshellPodName).Namespace(nodeshellPodNamespace).SubResource("exec")
+	req := utils.Cfg.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(nodeshellPodName).Namespace(nodeshellPodNamespace).SubResource("exec")
 	opts := &corev1.PodExecOptions{
 		Command: podExecCmd,
 		Stdin:   true,
@@ -150,7 +178,7 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 	req.VersionedParams(opts, scheme.ParameterCodec)
 
 	//TODO: Check if there is any way we can fetch the config from the clientset itself
-	k8sConfig, err := auth.GetKubeConfig()
+	k8sConfig, err := utils.GetKubeConfig()
 	if err != nil {
 		log.Fatalf("Error while getting Kubeconfig: %v", err)
 		return err
@@ -176,14 +204,7 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 func cleanUpNodeshellPods(cmd *cobra.Command, nodeName string) error {
 	var nodeshellPodName = nodeshellPodNamePrefix + nodeName
 
-	//TODO: Remove repeated clientset initialisation
-	clientset, err := auth.K8sAuth()
-	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
-		return err
-	}
-
-	err = clientset.CoreV1().Pods(nodeshellPodNamespace).Delete(context.TODO(), nodeshellPodName, metav1.DeleteOptions{})
+	err := utils.Cfg.Clientset.CoreV1().Pods(nodeshellPodNamespace).Delete(context.TODO(), nodeshellPodName, metav1.DeleteOptions{})
 	if err != nil {
 		log.Fatalf("Error while creating the nodeshell pod: %v", err)
 		return err

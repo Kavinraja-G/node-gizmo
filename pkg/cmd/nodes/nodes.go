@@ -3,13 +3,12 @@ package nodes
 import (
 	"context"
 	"fmt"
-	"log"
+	"github.com/Kavinraja-G/node-gizmo/utils"
 	"strings"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
-	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,13 +52,11 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 		ShowNodeTopologyInfo: showNodeTopologyInfo,
 	}
 
-	clientset, err := auth.K8sAuth()
+	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
 		return err
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	for _, node := range nodes.Items {
 		genericNodeInfo := pkg.GenericNodeInfo{
 			NodeName:   node.Name,

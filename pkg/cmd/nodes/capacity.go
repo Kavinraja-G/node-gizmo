@@ -2,13 +2,10 @@ package nodes
 
 import (
 	"context"
-	"log"
-
-	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
-	"github.com/Kavinraja-G/node-gizmo/pkg/utils"
+	"github.com/Kavinraja-G/node-gizmo/utils"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
-	"github.com/Kavinraja-G/node-gizmo/pkg/auth"
+	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,13 +28,7 @@ func NewCmdNodeCapacityInfo() *cobra.Command {
 func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	var nodeCapacityInfo []pkg.NodeCapacities
 
-	clientset, err := auth.K8sAuth()
-	if err != nil {
-		log.Fatalf("Error while authenticating to kubernetes: %v", err)
-		return err
-	}
-
-	nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
