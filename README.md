@@ -1,6 +1,13 @@
 # node-gizmo
 A CLI utility for your Kubernetes nodes.
 
+### Installation
+nodegizmo kubectl plugin is available in [krew](https://krew.sigs.k8s.io/) plugin manager. Anyone can install with the following steps:
+1. Install `krew` for kuebctl using the following [doc](https://krew.sigs.k8s.io/docs/user-guide/setup/install/).
+2. ```bash
+    > kubectl krew install nodegizmo
+    ```
+
 ### Features
 ##### nodegizmo node
 Generic node related information
