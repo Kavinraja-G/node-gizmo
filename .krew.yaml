@@ -8,30 +8,30 @@ spec:
   shortDescription: A CLI utility for your kubernetes nodes
   description: |
     Nodegizmo is a bundle of CLI commands that helps you in displaying more
-    information about your kubernetes nodes, nodepool/nodegroup and it also 
+    information about your kubernetes nodes, nodepool/nodegroup and it also
     provides exec feature to your nodes using nsenter pods.
   platforms:
-    - selector:
-        matchLabels:
-          os: darwin
-          arch: amd64
-      {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
-      bin: nodegizmo
-    - selector:
-        matchLabels:
-          os: darwin
-          arch: arm64
-      {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
-      bin: nodegizmo
-    - selector:
-        matchLabels:
-          os: linux
-          arch: amd64
-      {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
-      bin: nodegizmo
-    - selector:
-        matchLabels:
-          os: windows
-          arch: amd64
-      {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
-      bin: nodegizmo.exe
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
+    bin: nodegizmo
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    bin: nodegizmo
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    bin: nodegizmo
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    {{addURIAndSha "https://github.com/Kavinraja-G/node-gizmo/releases/download/{{ .TagName }}/nodegizmo_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
+    bin: nodegizmo.exe
