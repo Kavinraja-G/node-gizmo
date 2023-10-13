@@ -3,8 +3,9 @@ package nodes
 import (
 	"context"
 	"fmt"
-	"github.com/Kavinraja-G/node-gizmo/utils"
 	"strings"
+
+	"github.com/Kavinraja-G/node-gizmo/utils"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 
@@ -18,6 +19,7 @@ var (
 	showTaints           bool
 	showNodeProviderInfo bool
 	showNodeTopologyInfo bool
+	sortByHeader         string
 )
 
 // NewCmdNodeInfo initializes the 'node' command
@@ -29,12 +31,14 @@ func NewCmdNodeInfo() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodeInfo(cmd, args)
 		},
+		TraverseChildren: true,
 	}
 
 	// additional local flags
 	cmd.Flags().BoolVarP(&showTaints, "show-taints", "t", false, "Shows taints added on a node")
 	cmd.Flags().BoolVarP(&showNodeProviderInfo, "show-providers", "p", false, "Shows cloud provider name for a node")
 	cmd.Flags().BoolVarP(&showNodeTopologyInfo, "show-topology", "T", false, "Shows node topology info like region & zones for a node")
+	cmd.PersistentFlags().StringVarP(&sortByHeader, "sort-by", "", "name", "Sorts output using a valid Column name. Defaults to 'name' if the column name is not valid")
 
 	// additional sub-commands
 	cmd.AddCommand(NewCmdNodeCapacityInfo())
@@ -81,6 +85,7 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 	}
 
 	outputHeaders, outputData := generateNodeInfoOutputData(nodeInfos, outputOpts)
+	outputs.SortOutputBasedOnHeader(outputHeaders, outputData, sortByHeader)
 	outputs.TableOutput(outputHeaders, outputData)
 
 	return nil
@@ -151,5 +156,6 @@ func generateNodeInfoOutputData(genericNodeInfos []pkg.GenericNodeInfo, outputOp
 		}
 		outputData = append(outputData, lineItems)
 	}
+
 	return headers, outputData
 }

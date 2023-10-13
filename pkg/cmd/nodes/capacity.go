@@ -2,10 +2,10 @@ package nodes
 
 import (
 	"context"
-	"github.com/Kavinraja-G/node-gizmo/utils"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
+	"github.com/Kavinraja-G/node-gizmo/utils"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -47,6 +47,7 @@ func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	}
 
 	outputHeaders, outputData := generateNodeCapacityOutputData(nodeCapacityInfo)
+	outputs.SortOutputBasedOnHeader(outputHeaders, outputData, sortByHeader)
 	outputs.TableOutput(outputHeaders, outputData)
 
 	return nil
