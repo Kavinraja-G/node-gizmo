@@ -2,16 +2,17 @@ package nodepool
 
 import (
 	"context"
-	"github.com/Kavinraja-G/node-gizmo/utils"
 	"strings"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
+	"github.com/Kavinraja-G/node-gizmo/utils"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg"
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var sortByHeader string
 
 func NewCmdNodepoolInfo() *cobra.Command {
 	cmd := &cobra.Command{
@@ -22,6 +23,9 @@ func NewCmdNodepoolInfo() *cobra.Command {
 			return showNodePoolInfo(cmd, args)
 		},
 	}
+
+	// additional local flags
+	cmd.Flags().StringVarP(&sortByHeader, "sort-by", "", "nodepool", "Sorts output using a valid Column name. Defaults to 'nodepool' if the column name is not valid")
 
 	return cmd
 }
@@ -56,29 +60,10 @@ func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 	}
 
 	outputHeaders, outputData := generateNodepoolInfoData(genericNodepoolInfos)
+	outputs.SortOutputBasedOnHeader(outputHeaders, outputData, sortByHeader)
 	outputs.TableOutput(outputHeaders, outputData)
 
 	return nil
-}
-
-// getNodeAddresses returns the respective nodeAddress values for 'Hostname', 'InternalIP', 'ExternalIP', 'ExternalDNS'
-// TODO: Add nodeAddress fields for detailed node info using flags
-func getNodeAddresses(addresses []corev1.NodeAddress, addressType string) string {
-	for _, address := range addresses {
-		if (address.Type == corev1.NodeHostName) && (addressType == string(corev1.NodeHostName)) {
-			return address.Address
-		}
-		if (address.Type == corev1.NodeInternalIP) && (addressType == string(corev1.NodeInternalIP)) {
-			return address.Address
-		}
-		if (address.Type == corev1.NodeExternalIP) && (addressType == string(corev1.NodeExternalIP)) {
-			return address.Address
-		}
-		if (address.Type == corev1.NodeExternalDNS) && (addressType == string(corev1.NodeExternalDNS)) {
-			return address.Address
-		}
-	}
-	return "Unknown"
 }
 
 // getNodepoolIDAndProvider returns the cloud provider type for the nodepool (EKS, GKE, AKS, can be Unknown)

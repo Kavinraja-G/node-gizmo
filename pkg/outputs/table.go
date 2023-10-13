@@ -13,10 +13,17 @@ func TableOutput(headers []string, outputData [][]string) {
 	// misc configs for the table-writer
 	table.SetRowLine(false)
 	table.SetBorder(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(true)
-	table.SetColumnSeparator("")
+	table.SetAutoWrapText(false)
+	table.SetAutoFormatHeaders(true)
 	table.SetHeaderLine(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+	table.SetCenterSeparator("")
+	table.SetColumnSeparator("")
+	table.SetRowSeparator("")
+	table.SetTablePadding("\t")
+	table.SetNoWhiteSpace(true)
 
 	// set headers and add the outputData
 	table.SetHeader(headers)
