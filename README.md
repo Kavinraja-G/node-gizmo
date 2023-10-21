@@ -1,6 +1,10 @@
 # node-gizmo
 A CLI utility for your Kubernetes nodes.
 
+[![Build](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/pr.yaml/badge.svg)](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/pr.yaml)
+[![Release](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/release.yml/badge.svg)](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/release.yml)
+[![Go Coverage](https://github.com/Kavinraja-G/node-gizmo/wiki/coverage.svg)](https://raw.githack.com/wiki/Kavinraja-G/node-gizmo/coverage.html)
+
 ### Installation
 nodegizmo kubectl plugin is available in [krew](https://krew.sigs.k8s.io/) plugin manager. Anyone can install with the following steps:
 1. Install `krew` for kuebctl using the following [doc](https://krew.sigs.k8s.io/docs/user-guide/setup/install/).
