@@ -1,4 +1,4 @@
-name: pr
+name: PR Build
 
 on:
   push:
@@ -27,3 +27,10 @@ jobs:
 
       - name: Go Test
         run: go test -v ./...
+
+      - name: Update coverage report
+        uses: ncruces/go-coverage-report@v0.2.7
+        with:
+          report: true
+          reuse-go: true
+        continue-on-error: true
