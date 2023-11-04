@@ -10,7 +10,12 @@ import (
 func TableOutput(headers []string, outputData [][]string) {
 	table := tablewriter.NewWriter(os.Stdout)
 
-	// misc configs for the table-writer
+	// enables autoMerge only for nodepool infos
+	if headers[0] == "NODEPOOL" {
+		table.SetAutoMergeCells(true)
+	}
+
+	// default configs for the table-writer
 	table.SetRowLine(false)
 	table.SetBorder(false)
 	table.SetAutoWrapText(false)
@@ -23,7 +28,6 @@ func TableOutput(headers []string, outputData [][]string) {
 	table.SetColumnSeparator("")
 	table.SetRowSeparator("")
 	table.SetTablePadding("\t")
-	table.SetNoWhiteSpace(true)
 
 	// set headers and add the outputData
 	table.SetHeader(headers)

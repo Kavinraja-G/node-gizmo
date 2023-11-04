@@ -2,7 +2,6 @@ package nodepool
 
 import (
 	"context"
-	"strings"
 
 	"github.com/Kavinraja-G/node-gizmo/pkg/outputs"
 	"github.com/Kavinraja-G/node-gizmo/utils"
@@ -32,7 +31,7 @@ func NewCmdNodepoolInfo() *cobra.Command {
 
 // showNodePoolInfo driver function for the 'nodepool' command
 func showNodePoolInfo(cmd *cobra.Command, args []string) error {
-	var genericNodepoolInfos = make(map[string]pkg.GenericNodepoolInfo)
+	var genericNodepoolInfos []pkg.GenericNodepoolInfo
 
 	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -40,23 +39,17 @@ func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, node := range nodes.Items {
-		var genericNodepoolInfo pkg.GenericNodepoolInfo
-
 		cloudProvider, nodepoolID := getNodepoolIDAndProvider(node.Labels)
-		if _, ok := genericNodepoolInfos[nodepoolID]; !ok {
-			genericNodepoolInfo.NodepoolID = nodepoolID
-			genericNodepoolInfo.Nodes = append(genericNodepoolInfo.Nodes, node.Name)
-			genericNodepoolInfo.Provider = cloudProvider
-			genericNodepoolInfo.InstanceType = getNodeInstanceType(node.Labels)
-			genericNodepoolInfo.Region, genericNodepoolInfo.Zone = pkg.GetNodeTopologyInfo(node.Labels)
+		region, zone := pkg.GetNodeTopologyInfo(node.Labels)
 
-			// finally add the genericNodepoolInfo data to the genericNodepoolInfos
-			genericNodepoolInfos[nodepoolID] = genericNodepoolInfo
-		} else {
-			var currentNodepoolInfo = genericNodepoolInfos[nodepoolID]
-			currentNodepoolInfo.Nodes = append(currentNodepoolInfo.Nodes, node.Name)
-			genericNodepoolInfos[nodepoolID] = currentNodepoolInfo
-		}
+		genericNodepoolInfos = append(genericNodepoolInfos, pkg.GenericNodepoolInfo{
+			NodepoolID:   nodepoolID,
+			Node:         node.Name,
+			Provider:     cloudProvider,
+			InstanceType: getNodeInstanceType(node.Labels),
+			Region:       region,
+			Zone:         zone,
+		})
 	}
 
 	outputHeaders, outputData := generateNodepoolInfoData(genericNodepoolInfos)
@@ -66,7 +59,7 @@ func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// getNodepoolIDAndProvider returns the cloud provider type for the nodepool (EKS, GKE, AKS, can be Unknown)
+// getNodepoolIDAndProvider returns the cloud provider type for the nodepool (EKS/Karpenter, GKE, AKS, can be Unknown)
 func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
 	if id, ok := labels[pkg.AwsNodepoolLabel]; ok {
 		return "EKS", id
@@ -76,6 +69,9 @@ func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
 	}
 	if id, ok := labels[pkg.AksNodepoolLabel]; ok {
 		return "AKS", id
+	}
+	if id, ok := labels[pkg.KarpenterNodepool]; ok {
+		return "Karpenter", id
 	}
 
 	return "Unknown", "Unknown"
@@ -91,7 +87,7 @@ func getNodeInstanceType(labels map[string]string) string {
 }
 
 // generateNodepoolInfoData generates the Nodepool info outputs and the required headers for table-writer
-func generateNodepoolInfoData(genericNodepoolInfos map[string]pkg.GenericNodepoolInfo) ([]string, [][]string) {
+func generateNodepoolInfoData(genericNodepoolInfos []pkg.GenericNodepoolInfo) ([]string, [][]string) {
 	var headers = []string{"NODEPOOL", "PROVIDER", "REGION", "ZONE", "INSTANCE-TYPE", "NODES"}
 	var outputData [][]string
 
@@ -102,7 +98,7 @@ func generateNodepoolInfoData(genericNodepoolInfos map[string]pkg.GenericNodepoo
 			nodepoolInfo.Region,
 			nodepoolInfo.Zone,
 			nodepoolInfo.InstanceType,
-			strings.Join(nodepoolInfo.Nodes, "\n"),
+			nodepoolInfo.Node,
 		}
 
 		outputData = append(outputData, lineItems)

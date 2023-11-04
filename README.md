@@ -41,7 +41,7 @@ Nodepool related information
   - Node list
   - Topology info (Region & Zone)
   - Instance type
-  - Nodepool provider (supported: EKS/AKS/GKE)
+  - Nodepool provider (supported: EKS/AKS/GKE/Karpenter)
 <p align="center"><img src="/assets/nodegizmo-nodepool.png" alt="Nodegizmo node "/></p>
 
 ##### nodegizmo node exec nodeName

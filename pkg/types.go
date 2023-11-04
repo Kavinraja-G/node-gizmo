@@ -35,7 +35,7 @@ type NodeCapacities struct {
 // GenericNodepoolInfo required node pool info which is used 'nodepool' command
 type GenericNodepoolInfo struct {
 	NodepoolID   string
-	Nodes        []string
+	Node         string
 	Provider     string
 	InstanceType string
 	Region       string
