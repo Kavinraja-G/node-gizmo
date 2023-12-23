@@ -20,11 +20,12 @@ var Cfg Config
 // GetKubeConfig is used to fetch the kubeConfig based on the KUBECONFIG env or '~/.kube/config' location
 func GetKubeConfig() (*rest.Config, error) {
 	var kubeConfigPath string
+	var defaultKubeConfigPath = "~/.kube/config"
+
 	if home := homedir.HomeDir(); home != "" {
-		kubeConfigPath = filepath.Join(home, ".kube", "config")
-	} else {
-		kubeConfigPath = GetEnv("KUBECONFIG", "~/.kube/config")
+		defaultKubeConfigPath = filepath.Join(home, ".kube", "config")
 	}
+	kubeConfigPath = GetEnv("KUBECONFIG", defaultKubeConfigPath)
 
 	k8sConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	return k8sConfig, err
@@ -33,6 +34,10 @@ func GetKubeConfig() (*rest.Config, error) {
 // k8sAuth is used to get the Kubernetes clientset from the config
 func k8sAuth() (*k8s.Clientset, error) {
 	k8sConfig, err := GetKubeConfig()
+	if err != nil {
+		log.Fatalf("Error while getting kubeconfig: %v", err)
+	}
+
 	clientset, err := k8s.NewForConfig(k8sConfig)
 	if err != nil {
 		log.Fatalf("Error while creating the clientset: %v", err)

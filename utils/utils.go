@@ -8,7 +8,7 @@ import (
 
 // GetEnv Helper function for fetching envs with defaults
 func GetEnv(env, defaults string) string {
-	if val, ok := os.LookupEnv(env); ok {
+	if val, ok := os.LookupEnv(env); ok && val != "" {
 		return val
 	}
 	return defaults
