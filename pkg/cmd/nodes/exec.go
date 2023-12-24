@@ -8,24 +8,21 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/cli/cli/streams"
-
 	"github.com/Kavinraja-G/node-gizmo/utils"
-
-	k8errors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/remotecommand"
-
+	"github.com/docker/cli/cli/streams"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	k8errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 var (
 	nodeshellPodNamespace            string
 	nodeshellPodImage                string
+	nodeshellPodTTL                  string
 	nodeshellPodNamePrefix           = "nodeshell-"
 	podSCPrivileged                  = true
 	podTerminationGracePeriodSeconds = int64(0)
@@ -63,6 +60,7 @@ func NewCmdNodeExec() *cobra.Command {
 	// additional local flags
 	cmd.Flags().StringVarP(&nodeshellPodNamespace, "namespace", "n", "kube-system", "Namespace where nsenter pod to be created")
 	cmd.Flags().StringVarP(&nodeshellPodImage, "image", "i", "docker.io/alpine:3.18", "Image used by nsenter pod")
+	cmd.Flags().StringVarP(&nodeshellPodTTL, "ttl", "t", "3600", "Time to live (seconds) for the exec container. Defaults to 3600s")
 
 	return cmd
 }
@@ -103,7 +101,7 @@ func createExecPodInTargetedNode(nodeName string) error {
 					Name:    "nodeshell",
 					Image:   nodeshellPodImage,
 					Command: []string{"nsenter"},
-					Args:    []string{"-t", "1", "-m", "-u", "-i", "-n", "sleep", "14000"},
+					Args:    []string{"-t", "1", "-m", "-u", "-i", "-n", "sleep", nodeshellPodTTL},
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: &podSCPrivileged,
 					},
@@ -186,7 +184,6 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 
 	req.VersionedParams(opts, scheme.ParameterCodec)
 
-	//TODO: Check if there is any way we can fetch the config from the clientset itself
 	k8sConfig, err := utils.GetKubeConfig()
 	if err != nil {
 		log.Fatalf("Error while getting Kubeconfig: %v", err)

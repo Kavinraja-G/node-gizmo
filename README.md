@@ -1,7 +1,6 @@
 # node-gizmo
 A CLI utility for your Kubernetes nodes.
 
-[![Build](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/pr.yaml/badge.svg)](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/pr.yaml)
 [![Release](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/release.yml/badge.svg)](https://github.com/Kavinraja-G/node-gizmo/actions/workflows/release.yml)
 [![Go Coverage](https://github.com/Kavinraja-G/node-gizmo/wiki/coverage.svg)](https://raw.githack.com/wiki/Kavinraja-G/node-gizmo/coverage.html)
 
