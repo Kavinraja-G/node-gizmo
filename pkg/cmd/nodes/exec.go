@@ -8,19 +8,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/cli/cli/streams"
-
 	"github.com/Kavinraja-G/node-gizmo/utils"
-
-	k8errors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/remotecommand"
-
+	"github.com/docker/cli/cli/streams"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	k8errors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 var (
@@ -188,7 +184,6 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 
 	req.VersionedParams(opts, scheme.ParameterCodec)
 
-	//TODO: Check if there is any way we can fetch the config from the clientset itself
 	k8sConfig, err := utils.GetKubeConfig()
 	if err != nil {
 		log.Fatalf("Error while getting Kubeconfig: %v", err)
