@@ -26,6 +26,7 @@ import (
 var (
 	nodeshellPodNamespace            string
 	nodeshellPodImage                string
+	nodeshellPodTTL                  string
 	nodeshellPodNamePrefix           = "nodeshell-"
 	podSCPrivileged                  = true
 	podTerminationGracePeriodSeconds = int64(0)
@@ -63,6 +64,7 @@ func NewCmdNodeExec() *cobra.Command {
 	// additional local flags
 	cmd.Flags().StringVarP(&nodeshellPodNamespace, "namespace", "n", "kube-system", "Namespace where nsenter pod to be created")
 	cmd.Flags().StringVarP(&nodeshellPodImage, "image", "i", "docker.io/alpine:3.18", "Image used by nsenter pod")
+	cmd.Flags().StringVarP(&nodeshellPodTTL, "ttl", "t", "3600", "Time to live (seconds) for the exec container. Defaults to 3600s")
 
 	return cmd
 }
@@ -103,7 +105,7 @@ func createExecPodInTargetedNode(nodeName string) error {
 					Name:    "nodeshell",
 					Image:   nodeshellPodImage,
 					Command: []string{"nsenter"},
-					Args:    []string{"-t", "1", "-m", "-u", "-i", "-n", "sleep", "14000"},
+					Args:    []string{"-t", "1", "-m", "-u", "-i", "-n", "sleep", nodeshellPodTTL},
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: &podSCPrivileged,
 					},
