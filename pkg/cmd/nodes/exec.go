@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/docker/cli/cli/streams"
+
 	"github.com/Kavinraja-G/node-gizmo/utils"
 
 	k8errors "k8s.io/apimachinery/pkg/api/errors"
@@ -198,10 +200,17 @@ func execIntoNode(cmd *cobra.Command, nodeName string) error {
 		return err
 	}
 
+	// inspired from https://github.com/kubernetes/client-go/issues/912
+	input := streams.NewIn(os.Stdin)
+	if err = input.SetRawTerminal(); err != nil {
+		log.Fatalf("Error setting rawTerminal: %v", err)
+	}
+
 	err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
-		Stdin:  os.Stdin,
+		Stdin:  input,
 		Stdout: os.Stdout,
 		Stderr: os.Stderr,
+		Tty:    true,
 	})
 
 	return err
