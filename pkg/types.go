@@ -40,4 +40,5 @@ type GenericNodepoolInfo struct {
 	InstanceType string
 	Region       string
 	Zone         string
+	K8sVersion   string
 }
