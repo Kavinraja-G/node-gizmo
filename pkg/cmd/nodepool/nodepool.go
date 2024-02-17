@@ -49,6 +49,7 @@ func showNodePoolInfo(cmd *cobra.Command, args []string) error {
 			InstanceType: getNodeInstanceType(node.Labels),
 			Region:       region,
 			Zone:         zone,
+			K8sVersion:   node.Status.NodeInfo.KubeletVersion,
 		})
 	}
 
@@ -88,7 +89,7 @@ func getNodeInstanceType(labels map[string]string) string {
 
 // generateNodepoolInfoData generates the Nodepool info outputs and the required headers for table-writer
 func generateNodepoolInfoData(genericNodepoolInfos []pkg.GenericNodepoolInfo) ([]string, [][]string) {
-	var headers = []string{"NODEPOOL", "PROVIDER", "REGION", "ZONE", "INSTANCE-TYPE", "NODES"}
+	var headers = []string{"NODEPOOL", "PROVIDER", "REGION", "ZONE", "INSTANCE-TYPE", "VERSION", "NODES"}
 	var outputData [][]string
 
 	for _, nodepoolInfo := range genericNodepoolInfos {
@@ -98,6 +99,7 @@ func generateNodepoolInfoData(genericNodepoolInfos []pkg.GenericNodepoolInfo) ([
 			nodepoolInfo.Region,
 			nodepoolInfo.Zone,
 			nodepoolInfo.InstanceType,
+			nodepoolInfo.K8sVersion,
 			nodepoolInfo.Node,
 		}
 
