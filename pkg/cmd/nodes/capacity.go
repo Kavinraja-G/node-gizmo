@@ -15,7 +15,7 @@ func NewCmdNodeCapacityInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "capacity",
 		Short:   "Displays Node capacity related information",
-		Aliases: []string{"capacities", "cp"},
+		Aliases: []string{"capacities", "cap"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodeCapacities(cmd, args)
 		},
@@ -28,7 +28,7 @@ func NewCmdNodeCapacityInfo() *cobra.Command {
 func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	var nodeCapacityInfo []pkg.NodeCapacities
 	labels, _ = cmd.Flags().GetString("labels")
-	
+
 	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: labels})
 	if err != nil {
 		return err

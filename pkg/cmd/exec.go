@@ -1,4 +1,4 @@
-package nodes
+package cmd
 
 import (
 	"context"
@@ -31,8 +31,8 @@ var (
 // NewCmdNodeExec initialises the 'exec' command
 func NewCmdNodeExec() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "exec nodeName",
-		Short:   "Spawns a 'nsenter' pod to exec into the provided node",
+		Use:     "exec <node-name>",
+		Short:   "Spawns a nsenter pod to exec into the provided node",
 		Aliases: []string{"ex"},
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -21,9 +21,10 @@ func NewCmdRoot() *cobra.Command {
 	}
 
 	// child commands
+	cmd.AddCommand(NewCmdDocs(cmd))
+	cmd.AddCommand(NewCmdNodeExec())
 	cmd.AddCommand(nodes.NewCmdNodeInfo())
 	cmd.AddCommand(nodepool.NewCmdNodepoolInfo())
-	cmd.AddCommand(NewCmdDocs(cmd))
 
 	return cmd
 }
