@@ -1,6 +1,6 @@
 ## nodegizmo nodepool
 
-Displays detailed information about Nodepool/Nodegroup
+Displays detailed information about Nodepool
 
 ```
 nodegizmo nodepool [flags]
