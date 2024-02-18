@@ -16,7 +16,7 @@ var sortByHeader string
 func NewCmdNodepoolInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "nodepool",
-		Short:   "Displays detailed information about Nodepool/Nodegroup",
+		Short:   "Displays detailed information about Nodepool",
 		Aliases: []string{"np", "ng"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return showNodePoolInfo(cmd, args)
