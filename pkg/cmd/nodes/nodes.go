@@ -20,6 +20,7 @@ var (
 	showNodeProviderInfo bool
 	showNodeTopologyInfo bool
 	sortByHeader         string
+	labels               string
 )
 
 // NewCmdNodeInfo initializes the 'node' command
@@ -39,6 +40,7 @@ func NewCmdNodeInfo() *cobra.Command {
 	cmd.Flags().BoolVarP(&showNodeProviderInfo, "show-providers", "p", false, "Shows cloud provider name for a node")
 	cmd.Flags().BoolVarP(&showNodeTopologyInfo, "show-topology", "T", false, "Shows node topology info like region & zones for a node")
 	cmd.PersistentFlags().StringVarP(&sortByHeader, "sort-by", "", "name", "Sorts output using a valid Column name. Defaults to 'name' if the column name is not valid")
+	cmd.PersistentFlags().StringVarP(&labels, "labels", "l", "", "Filter based on node labels")
 
 	// additional sub-commands
 	cmd.AddCommand(NewCmdNodeCapacityInfo())
@@ -56,7 +58,7 @@ func showNodeInfo(cmd *cobra.Command, args []string) error {
 		ShowNodeTopologyInfo: showNodeTopologyInfo,
 	}
 
-	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: labels})
 	if err != nil {
 		return err
 	}

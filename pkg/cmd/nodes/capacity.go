@@ -27,8 +27,9 @@ func NewCmdNodeCapacityInfo() *cobra.Command {
 // showNodeCapacities driver function for 'node capacity' command
 func showNodeCapacities(cmd *cobra.Command, args []string) error {
 	var nodeCapacityInfo []pkg.NodeCapacities
-
-	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+	labels, _ = cmd.Flags().GetString("labels")
+	
+	nodes, err := utils.Cfg.Clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{LabelSelector: labels})
 	if err != nil {
 		return err
 	}
