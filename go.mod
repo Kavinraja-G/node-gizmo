@@ -1,6 +1,6 @@
 module github.com/Kavinraja-G/node-gizmo
 
-go 1.21
+go 1.22
 
 require (
 	github.com/docker/cli v24.0.7+incompatible
