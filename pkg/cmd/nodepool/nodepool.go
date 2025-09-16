@@ -74,6 +74,12 @@ func getNodepoolIDAndProvider(labels map[string]string) (string, string) {
 	if id, ok := labels[pkg.KarpenterNodepool]; ok {
 		return "Karpenter", id
 	}
+	if id, ok := labels[pkg.KarpenterNodepoolV1]; ok {
+		return "Karpenter", id
+	}
+	if id, ok := labels[pkg.OpenshiftMachinepool]; ok {
+		return "Openshift", id
+	}
 
 	return "Unknown", "Unknown"
 }
